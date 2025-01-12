@@ -11,12 +11,14 @@ import CourseCreation from './components/CourseCreation';
 import LecturePage from './components/LecturePage';
 import PrivateRoute from './PrivateRoute';
 import SupportPage from './components/SupportPage';
+import Analytics from './components/Analytics';
 
 function App() {
   return (
     <UserProvider>
       <Router>
         <div className="App">
+          <Analytics />
           <Header />
           <Routes>
             <Route path="/" element={<HomePage />} />
