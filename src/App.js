@@ -12,6 +12,7 @@ import LecturePage from './components/LecturePage';
 import PrivateRoute from './PrivateRoute';
 import SupportPage from './components/SupportPage';
 import Analytics from './components/Analytics';
+import ClarityTracking from './components/ClarityTracking';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <Router>
         <div className="App">
           <Analytics />
+          <ClarityTracking />
           <Header />
           <Routes>
             <Route path="/" element={<HomePage />} />
