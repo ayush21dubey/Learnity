@@ -13,33 +13,37 @@ import PrivateRoute from './PrivateRoute';
 import SupportPage from './components/SupportPage';
 import Analytics from './components/Analytics';
 import ClarityTracking from './components/ClarityTracking';
+import FeedbackPage from './components/FeedbackPage';
 
 function App() {
   return (
     <UserProvider>
       <Router>
-        <div className="App">
+        <div className="App flex flex-col min-h-screen">
           <Analytics />
           <ClarityTracking />
           <Header />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/courses" element={<CoursesList />} />
-            <Route
-              path="/create-course"
-              element={
-                <PrivateRoute>
-                  <CourseCreation />
-                </PrivateRoute>
-              }
-            />
-            <Route path="/courses/:courseId" element={<CoursePage />} />
-            <Route path="/lecture/:videoId" element={<LecturePage />} />
-            <Route path="/support" element={<SupportPage />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/courses" element={<CoursesList />} />
+              <Route
+                path="/create-course"
+                element={
+                  <PrivateRoute>
+                    <CourseCreation />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="/courses/:courseId" element={<CoursePage />} />
+              <Route path="/lecture/:videoId" element={<LecturePage />} />
+              <Route path="/support" element={<SupportPage />} />
+              <Route path="/feedback" element={<FeedbackPage />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
         </div>
       </Router>
     </UserProvider>

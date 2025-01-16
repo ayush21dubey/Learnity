@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import { BookOpen, Users, Trophy, Search } from 'lucide-react';
+import { BookOpen, Users, Trophy, Search, MessageSquare } from 'lucide-react';
 import axios from 'axios';
+import Footer from './Footer';
 
 function HomePage() {
   const [popularCourses, setPopularCourses] = useState([]);
@@ -135,23 +136,34 @@ function HomePage() {
             </button>
           </Link>
         </section>
+
+        <section className="bg-gray-50 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-8">
+                Help Us Improve
+              </h2>
+              <div className="flex justify-center gap-4">
+                <Link
+                  to="/feedback"
+                  className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  <MessageSquare className="h-5 w-5 mr-2" />
+                  Provide Feedback
+                </Link>
+                <Link
+                  to="/support"
+                  className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  Support Learnity
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
-      <footer className="bg-[#0077b6] text-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="mb-4">&copy; 2023 Learnity. All rights reserved.</p>
-            <button className="bg-[#005f8b] text-white px-4 py-2 rounded-md hover:bg-[#004766] transition-colors duration-300 mx-2">
-              Provide Feedback
-            </button>
-            <Link to="/support">
-              <button className="bg-[#005f8b] text-white px-4 py-2 rounded-md hover:bg-[#004766] transition-colors duration-300 mx-2">
-                Support Learnity
-              </button>
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -17,6 +17,9 @@ function CoursePage() {
   const [deadline, setDeadline] = useState(null);
   const [daysRemaining, setDaysRemaining] = useState(null);
   const [isDescriptionCollapsed, setIsDescriptionCollapsed] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [completedVideos, setCompletedVideos] = useState(0);
+  const [courseProgress, setCourseProgress] = useState(0);
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -89,130 +92,99 @@ function CoursePage() {
     }
   };
 
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (user && courseId) {
+        try {
+          const progressRef = doc(db, 'users', user.uid, 'courseProgress', courseId);
+          const progressDoc = await getDoc(progressRef);
+          
+          if (progressDoc.exists()) {
+            const data = progressDoc.data();
+            setCourseProgress(data.progress || 0);
+            setCompletedVideos(data.completedVideos || 0);
+          }
+        } catch (error) {
+          console.error('Error fetching progress:', error);
+        }
+      }
+    };
+
+    fetchProgress();
+  }, [user, courseId]);
+
   if (!course) {
     return <div>Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <header className="bg-[#0077b6] text-white py-8">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h1 className="text-2xl font-bold mb-2">{course.title}</h1>
-          <div className="flex items-center space-x-4 text-sm text-blue-100">
-            <span className="flex items-center">
-              <BookOpen className="mr-2 h-4 w-4" />
-              {videos.length} lectures
-            </span>
-            <span className="flex items-center">
-              <Users className="mr-2 h-4 w-4" />
-              {course.views || 0} views
-            </span>
-            <span>{course.categoryName}</span>
+    <div className="min-h-screen bg-gray-50">
+      {/* Course Header */}
+      <div className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {course?.title}
+            </h1>
+            {user && (
+              <button className="w-full sm:w-auto bg-[#0077b6] text-white px-6 py-2 rounded-md hover:bg-[#005f8b]">
+                Enroll Now
+              </button>
+            )}
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="flex-grow container mx-auto px-4 py-8 max-w-4xl">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">About this Course</h2>
-              <div className="flex items-center mt-2 text-sm text-gray-600">
-                <span className="flex items-center mr-4">
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  {videos.length} lectures
-                </span>
-                <span className="flex items-center">
-                  <Users className="mr-2 h-4 w-4" />
-                  {course.views || 0} views
-                </span>
-              </div>
-            </div>
-            <button 
-              onClick={() => setIsDescriptionCollapsed(!isDescriptionCollapsed)}
-              className="text-purple-600 hover:text-purple-700 transition-colors"
-            >
-              {isDescriptionCollapsed ? (
-                <ChevronDown className="h-6 w-6" />
-              ) : (
-                <ChevronUp className="h-6 w-6" />
-              )}
-            </button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Progress Section */}
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">Course Progress</h2>
+            <span className="text-sm text-gray-600">
+              {completedVideos} of {videos?.length} lectures completed
+            </span>
           </div>
-          {!isDescriptionCollapsed && (
-            <div className="mt-4 text-gray-600 leading-relaxed">
-              <p>{course.description}</p>
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-sm">
-                  <span className="font-semibold">Instructor:</span> {course.instructor}
-                </p>
-                <p className="text-sm mt-1">
-                  <span className="font-semibold">Created:</span> {new Date(course.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-          )}
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
         </div>
 
-        {/* Deadline Section */}
-        {user && (
-          <div className="bg-white border border-gray-200 rounded-md p-6 mb-8">
-            <h3 className="text-lg font-semibold mb-4">Course Deadline</h3>
-            <div className="flex items-center space-x-4">
-              <DatePicker
-                selected={deadline}
-                onChange={handleDeadlineChange}
-                dateFormat="yyyy/MM/dd"
-                disabled={deadline !== null}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600"
-              />
-              {daysRemaining !== null && (
-                <span className="flex items-center text-gray-600">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {daysRemaining} days remaining
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Lectures List */}
-        <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
-          <h3 className="text-xl font-semibold p-6 border-b border-gray-200">Course Content</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {videos.map((video, index) => (
-              <Link 
-                key={video.snippet.resourceId.videoId}
-                to={`/lecture/${video.snippet.resourceId.videoId}`}
-                className="bg-[#f4f4f4] rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group"
-              >
-                <div className="relative">
-                  <img 
-                    src={video.snippet.thumbnails?.medium?.url || video.snippet.thumbnails?.default?.url} 
-                    alt={video.snippet.title}
-                    className="w-full h-40 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center">
-                    <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+        {/* Course Content */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="p-4 sm:p-6">
+            <h2 className="text-xl font-semibold mb-4">Course Content</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {videos?.map((video, index) => (
+                <Link
+                  key={video.snippet.resourceId.videoId}
+                  to={`/lecture/${video.snippet.resourceId.videoId}`}
+                  className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group"
+                >
+                  <div className="aspect-video relative">
+                    <img
+                      src={video.snippet.thumbnails?.medium?.url}
+                      alt={video.snippet.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center">
+                      <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
                   </div>
-                </div>
-                <div className="p-4">
-                  <span className="text-sm text-blue-600">Lecture {index + 1}</span>
-                  <h4 className="font-medium text-gray-800 mt-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                    {video.snippet.title}
-                  </h4>
-                </div>
-              </Link>
-            ))}
+                  <div className="p-4">
+                    <span className="text-sm text-blue-600">Lecture {index + 1}</span>
+                    <h4 className="font-medium text-gray-800 mt-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      {video.snippet.title}
+                    </h4>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
-      </main>
-
-      <footer className="bg-gray-50 py-6 border-t border-gray-200">
-        <div className="container mx-auto px-4 text-center text-gray-600">
-          <p>&copy; 2023 Learnity. All rights reserved.</p>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }
