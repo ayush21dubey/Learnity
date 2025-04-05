@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../firebase';
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import { BookOpen, Users, Trophy, Search } from 'lucide-react';
+import { collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { BookOpen, Users, Search, MessageSquare, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import Footer from './Footer';
+import { UserContext } from '../UserContext';
 
 function HomePage() {
+  const { user } = useContext(UserContext);
   const [popularCourses, setPopularCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [courseThumbnails, setCourseThumbnails] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchPopularCourses = async () => {
       try {
+        setIsLoading(true);
         const coursesCollection = collection(db, 'courses');
         const popularCoursesQuery = query(
           coursesCollection,
@@ -54,6 +58,8 @@ function HomePage() {
         setPopularCourses(coursesList);
       } catch (error) {
         console.error('Error fetching popular courses:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -66,11 +72,13 @@ function HomePage() {
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold mb-4">Welcome to Learnity</h1>
           <p className="text-xl mb-8 text-[#caf0f8]">Discover, Learn, and Grow with Our Online Courses</p>
-          <Link to="/login">
-            <button className="bg-white text-[#0077b6] px-6 py-3 rounded-md font-semibold hover:bg-[#f4f4f4] transition-all duration-300 transform hover:-translate-y-1">
-              Get Started
-            </button>
-          </Link>
+          {!user && (
+            <Link to="/login">
+              <button className="bg-white text-[#0077b6] px-6 py-3 rounded-md font-semibold hover:bg-[#f4f4f4] transition-all duration-300 transform hover:-translate-y-1">
+                Get Started
+              </button>
+            </Link>
+          )}
         </div>
       </header>
 
@@ -86,45 +94,51 @@ function HomePage() {
           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
 
-        <section className="mb-12 bg-white rounded-lg shadow-md p-8">
+        <section>
           <h2 className="text-2xl font-semibold mb-6 text-[#0077b6] text-center">Popular Courses</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {popularCourses.map(course => (
-              <Link 
-                key={course.id}
-                to={`/courses/${course.id}`}
-                className="bg-[#f4f4f4] rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <div className="relative aspect-video">
-                  {course.thumbnail ? (
-                    <img 
-                      src={course.thumbnail} 
-                      alt={course.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 animate-pulse flex items-center justify-center">
-                      <BookOpen className="h-8 w-8 text-gray-400" />
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 text-[#0077b6] animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {popularCourses.map(course => (
+                <Link 
+                  key={course.id}
+                  to={`/courses/${course.id}`}
+                  className="bg-[#f4f4f4] rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                >
+                  <div className="relative aspect-video">
+                    {course.thumbnail ? (
+                      <img 
+                        src={course.thumbnail} 
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 animate-pulse flex items-center justify-center">
+                        <BookOpen className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="text-lg font-semibold text-white line-clamp-2">{course.title}</h3>
                     </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-lg font-semibold text-white line-clamp-2">{course.title}</h3>
                   </div>
-                </div>
-                <div className="p-6">
-                  <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span className="flex items-center">
-                      <Users className="mr-2 h-4 w-4" />
-                      {course.views} views
-                    </span>
-                    <span className="text-[#0077b6]">{course.categoryName}</span>
+                  <div className="p-6">
+                    <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span className="flex items-center">
+                        <Users className="mr-2 h-4 w-4" />
+                        {course.views} views
+                      </span>
+                      <span className="text-[#0077b6]">{course.categoryName}</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="text-center mb-12">
@@ -135,23 +149,34 @@ function HomePage() {
             </button>
           </Link>
         </section>
+
+        <section className="bg-gray-50 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-8">
+                Help Us Improve
+              </h2>
+              <div className="flex justify-center gap-4">
+                <Link
+                  to="/feedback"
+                  className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  <MessageSquare className="h-5 w-5 mr-2" />
+                  Provide Feedback
+                </Link>
+                <Link
+                  to="/support"
+                  className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  Support Learnity
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
-      <footer className="bg-[#0077b6] text-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <p className="mb-4">&copy; 2023 Learnity. All rights reserved.</p>
-            <button className="bg-[#005f8b] text-white px-4 py-2 rounded-md hover:bg-[#004766] transition-colors duration-300 mx-2">
-              Provide Feedback
-            </button>
-            <Link to="/support">
-              <button className="bg-[#005f8b] text-white px-4 py-2 rounded-md hover:bg-[#004766] transition-colors duration-300 mx-2">
-                Support Learnity
-              </button>
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

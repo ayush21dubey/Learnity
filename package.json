@@ -7,21 +7,29 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.9",
+    "crypto-browserify": "^3.12.1",
     "date-fns": "^4.1.0",
+    "dotenv": "^16.4.7",
+    "events": "^3.3.0",
     "firebase": "^11.0.2",
+    "jspdf": "^2.5.2",
     "lucide-react": "^0.469.0",
+    "path-browserify": "^1.0.1",
+    "querystring-es3": "^0.2.1",
     "react": "^18.3.1",
     "react-datepicker": "^7.5.0",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
     "react-router-dom": "^7.0.2",
     "react-scripts": "5.0.1",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -43,9 +51,39 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "@tailwindcss/line-clamp": "^0.4.4",
+    "assert": "^2.1.0",
     "autoprefixer": "^10.4.20",
+    "buffer": "^6.0.3",
+    "https-browserify": "^1.0.0",
+    "os-browserify": "^0.3.0",
     "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.17"
+    "process": "^0.11.10",
+    "stream-http": "^3.2.0",
+    "tailwindcss": "^3.4.17",
+    "url": "^0.11.4",
+    "vm-browserify": "^1.1.2",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
+  },
+  "browser": {
+    "buffer": "buffer",
+    "url": "url",
+    "https": "https-browserify",
+    "http": "stream-http",
+    "stream": "stream-browserify",
+    "assert": "assert",
+    "util": "util",
+    "os": "os-browserify/browser",
+    "crypto": "crypto-browserify",
+    "path": "path-browserify",
+    "querystring": "querystring-es3",
+    "events": "events",
+    "process": "process",
+    "fs": false,
+    "net": false,
+    "tls": false,
+    "child_process": false
   }
 }
