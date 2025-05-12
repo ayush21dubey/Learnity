@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserContext } from '../UserContext';
-import { LogOut, ChevronDown, Menu, X } from 'lucide-react';
+import { LogOut, ChevronDown, Menu, X, Plus } from 'lucide-react';
 
 function Header() {
   const { user, logout } = useContext(UserContext);
@@ -94,6 +94,7 @@ function Header() {
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="sm:hidden bg-white border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
@@ -109,10 +110,31 @@ function Header() {
                 <span className="block px-3 py-2 text-base font-medium text-gray-500">
                   {user.displayName || user.email}
                 </span>
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                <Link
+                  to="/create-course"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
                 >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Create Course
+                </Link>
+                {user.email === 'ayush21dubey@gmail.com' && (
+                  <Link
+                    to="/admin/feedback"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-700 hover:bg-gray-50 flex items-center"
+                >
+                  <LogOut className="h-5 w-5 mr-2" />
                   Log Out
                 </button>
               </>

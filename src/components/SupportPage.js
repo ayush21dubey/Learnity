@@ -64,12 +64,6 @@ function SupportPage() {
           </div>
         </div>
       </main>
-
-      <footer className="bg-[#0077b6] text-white py-6 mt-12">
-        <div className="container mx-auto px-4 text-center">
-          <p>&copy; 2023 Learnity. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }

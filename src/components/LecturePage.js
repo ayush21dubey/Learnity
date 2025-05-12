@@ -1,9 +1,9 @@
 import React, { useEffect, useContext, useState, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { UserContext } from '../UserContext';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, Download } from 'lucide-react';
 import useVideoProgress from '../hooks/useVideoProgress';
 import { jsPDF } from 'jspdf';
 import { fetchYouTubeSubtitles, summarizeText } from '../utils/aiUtils'; // Utility functions for fetching and summarizing
@@ -11,6 +11,7 @@ import { fetchYouTubeSubtitles, summarizeText } from '../utils/aiUtils'; // Util
 function LecturePage() {
   const { user } = useContext(UserContext);
   const { videoId, courseId } = useParams();
+  const navigate = useNavigate();
   const [courseTitle, setCourseTitle] = useState('');
   const [videoTitle, setVideoTitle] = useState('');
   const playerRef = useRef(null);
@@ -81,7 +82,6 @@ function LecturePage() {
           events: {
             onReady: (event) => {
               console.log('Player is ready');
-              // Store player reference
               playerRef.current = event.target;
             },
             onStateChange: handlePlayerStateChange
@@ -113,20 +113,29 @@ function LecturePage() {
     const getSubtitlesAndSummarize = async () => {
       setLoading(true);
       try {
-        // Fetch subtitles
+        console.log('Fetching subtitles for video:', videoId);
         const subtitlesText = await fetchYouTubeSubtitles(videoId);
+        console.log('Subtitles fetched successfully:', subtitlesText.substring(0, 100) + '...');
 
-        // Summarize subtitles
+        console.log('Starting summarization...');
         const summarizedText = await summarizeText(subtitlesText);
+        console.log('Summarization completed:', summarizedText);
         setSummary(summarizedText);
       } catch (error) {
-        console.error('Error fetching or summarizing subtitles:', error);
+        console.error('Detailed error:', {
+          message: error.message,
+          stack: error.stack,
+          response: error.response?.data
+        });
+        setSummary('Error generating summary. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    getSubtitlesAndSummarize();
+    if (videoId) {
+      getSubtitlesAndSummarize();
+    }
   }, [videoId]);
 
   const downloadPDF = () => {
@@ -143,12 +152,12 @@ function LecturePage() {
         <div className="max-w-3xl mx-auto px-4">
           <div className="py-3">
             <div className="flex items-center space-x-3">
-              <Link 
-                to={`/courses/${courseId}`}
+              <button 
+                onClick={() => navigate(`/courses/${courseId}`)}
                 className="p-2 -ml-2 text-gray-600 hover:text-gray-800 transition-colors"
               >
                 <ArrowLeft className="h-5 w-5" />
-              </Link>
+              </button>
               <div className="truncate">
                 <div className="text-xs text-gray-600 truncate">{courseTitle}</div>
                 <div className="font-medium text-gray-800 text-sm sm:text-base truncate">
@@ -161,77 +170,49 @@ function LecturePage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-4">
-        {/* Optimized Video Player Container */}
-        <div className="bg-black rounded-lg overflow-hidden shadow-lg mb-6">
-          <div className="relative w-full">
-            {/* 16:9 aspect ratio maintained but max height limited */}
-            <div className="relative pt-[56.25%] max-h-[calc(100vh-200px)]">
-              <div id="player" className="absolute inset-0"></div>
-            </div>
+        {/* Video Player Container */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+          <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+            <div id="player" className="absolute top-0 left-0 w-full h-full"></div>
           </div>
         </div>
 
-        {/* Mobile-optimized Practice Questions Section */}
-        <div className="bg-white rounded-lg shadow-md">
-          <div className="p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
-                Practice Questions
-              </h2>
-              <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-            </div>
-            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 sm:p-6 text-center">
-              <h3 className="text-base sm:text-lg font-medium text-blue-800 mb-2">
-                Coming Soon!
-              </h3>
-              <p className="text-sm sm:text-base text-blue-600">
-                We're working on adding interactive practice questions for this lecture.
-                Stay tuned for updates!
-              </p>
-            </div>
+        {/* Notes Section */}
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Lecture Notes</h3>
+            <button
+              onClick={downloadPDF}
+              className="flex items-center text-blue-600 hover:text-blue-700"
+            >
+              <Download className="h-5 w-5 mr-1" />
+              <span className="text-sm">Download PDF</span>
+            </button>
           </div>
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (
+            <div className="prose max-w-none">
+              <p className="text-gray-700 whitespace-pre-wrap">{summary}</p>
+            </div>
+          )}
         </div>
 
-        {/* Additional Mobile-optimized Features */}
-        <div className="mt-6 space-y-4">
-          {/* Notes Section */}
-          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              Lecture Notes
-            </h3>
-            {loading ? (
-              <p>Loading...</p>
-            ) : (
-              <div>
-                <h2>Summary</h2>
-                <p>{summary}</p>
-                <button onClick={downloadPDF} className="download-button">
-                  Download as PDF
-                </button>
-              </div>
-            )}
+        {/* Practice Questions Section */}
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">Practice Questions</h2>
+            <BookOpen className="h-5 w-5 text-blue-600" />
           </div>
-
-          {/* Resources Section */}
-          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              Additional Resources
-            </h3>
-            <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <p className="text-sm text-gray-600">
-                Supplementary materials and resources will be available here.
-              </p>
-            </div>
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-center">
+            <h3 className="text-base font-medium text-blue-800 mb-2">Coming Soon!</h3>
+            <p className="text-sm text-blue-600">
+              We're working on adding interactive practice questions for this lecture.
+              Stay tuned for updates!
+            </p>
           </div>
-        </div>
-      </div>
-
-      {/* Mobile-optimized Footer */}
-      <div className="mt-8 py-4 bg-gray-50 border-t">
-        <div className="max-w-3xl mx-auto px-4 text-center">
-          <p className="text-xs text-gray-500">
-            &copy; 2024 Learnity. All rights reserved.
-          </p>
         </div>
       </div>
     </div>

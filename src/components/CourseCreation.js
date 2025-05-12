@@ -13,38 +13,46 @@ function CourseCreation() {
   const [courseTitle, setCourseTitle] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleCreateCourse = async () => {
     if (!user) {
-      alert('You must be logged in to create a course.');
+      setError('You must be logged in to create a course.');
       return;
     }
 
     if (!playlistUrl) {
-      alert('Please enter a YouTube playlist URL.');
+      setError('Please enter a YouTube playlist URL.');
       return;
     }
 
     const playlistId = extractPlaylistId(playlistUrl);
     if (!playlistId) {
-      alert('Invalid playlist URL. Please enter a valid YouTube playlist link.');
+      setError('Invalid playlist URL. Please enter a valid YouTube playlist link.');
       return;
     }
 
     setIsLoading(true);
+    setError('');
 
     try {
+      // Validate API key
+      if (!process.env.REACT_APP_GOOGLE_API_KEY) {
+        throw new Error('Google API key is not configured. Please check your .env file.');
+      }
+
       // First, get playlist details including categoryId
       const playlistResponse = await axios.get('https://www.googleapis.com/youtube/v3/playlists', {
         params: {
           part: 'snippet',
           id: playlistId,
-          key: process.env.REACT_APP_YOUTUBE_API_KEY,
+          key: process.env.REACT_APP_GOOGLE_API_KEY,
         },
+        timeout: 10000, // 10 second timeout
       });
 
       if (playlistResponse.data.items.length === 0) {
-        alert('No playlist found with the provided URL. Please check the link and try again.');
+        setError('No playlist found with the provided URL. Please check the link and try again.');
         setIsLoading(false);
         return;
       }
@@ -55,12 +63,13 @@ function CourseCreation() {
           part: 'snippet',
           playlistId: playlistId,
           maxResults: 1,
-          key: process.env.REACT_APP_YOUTUBE_API_KEY,
+          key: process.env.REACT_APP_GOOGLE_API_KEY,
         },
+        timeout: 10000,
       });
 
       if (videoResponse.data.items.length === 0) {
-        alert('The playlist appears to be empty.');
+        setError('The playlist appears to be empty.');
         setIsLoading(false);
         return;
       }
@@ -71,8 +80,9 @@ function CourseCreation() {
         params: {
           part: 'snippet',
           id: videoId,
-          key: process.env.REACT_APP_YOUTUBE_API_KEY,
+          key: process.env.REACT_APP_GOOGLE_API_KEY,
         },
+        timeout: 10000,
       });
 
       const categoryId = videoDetailsResponse.data.items[0].snippet.categoryId;
@@ -87,7 +97,7 @@ function CourseCreation() {
       ];
 
       if (!allowedCategories.includes(categoryId)) {
-        alert('This playlist must be in one of these categories: Education, Nonprofits & Activism, Science & Technology, How-to & Style, or News & Politics. Please choose an appropriate playlist.');
+        setError('This playlist must be in one of these categories: Education, Nonprofits & Activism, Science & Technology, How-to & Style, or News & Politics. Please choose an appropriate playlist.');
         setIsLoading(false);
         return;
       }
@@ -119,7 +129,7 @@ function CourseCreation() {
           email: user.email
         },
         categoryId: categoryId,
-        categoryName: categoryNames[categoryId] // Store the readable category name
+        categoryName: categoryNames[categoryId]
       };
 
       const docRef = await addDoc(collection(db, 'courses'), newCourse);
@@ -127,10 +137,27 @@ function CourseCreation() {
       navigate(`/courses/${docRef.id}`);
     } catch (error) {
       console.error('Error creating course:', error);
-      if (error.response?.status === 403) {
-        alert('YouTube API key error. Please contact support.');
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            setError('Invalid request. Please check your playlist URL.');
+            break;
+          case 403:
+            setError('YouTube API access forbidden. Please check your API key permissions.');
+            break;
+          case 404:
+            setError('Playlist not found. Please check the URL.');
+            break;
+          case 429:
+            setError('YouTube API quota exceeded. Please try again later.');
+            break;
+          default:
+            setError('Failed to create course. Please try again later.');
+        }
+      } else if (error.message.includes('API key')) {
+        setError('Google API key is not configured. Please check your .env file.');
       } else {
-        alert('Failed to create course. Please try again later.');
+        setError('Failed to create course. Please try again later.');
       }
     } finally {
       setIsLoading(false);
@@ -149,15 +176,21 @@ function CourseCreation() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-gray-50 py-6 sm:py-12 px-2 sm:px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-md shadow-sm border border-gray-200">
         {user ? (
-          <form className="p-8" onSubmit={(e) => e.preventDefault()}>
-            <h2 className="text-2xl font-semibold mb-6 text-gray-800">Create Course</h2>
+          <form className="p-4 sm:p-8" onSubmit={(e) => e.preventDefault()}>
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-gray-800">Create Course</h2>
             
-            <div className="space-y-6">
+            {error && (
+              <div className="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm sm:text-base">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-4 sm:space-y-6">
               <div>
-                <label htmlFor="courseTitle" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="courseTitle" className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Course Title
                 </label>
                 <input
@@ -167,12 +200,12 @@ function CourseCreation() {
                   onChange={(e) => setCourseTitle(e.target.value)}
                   placeholder="Course Title (Optional - will use playlist title if empty)"
                   disabled={isLoading}
-                  className="w-full px-4 py-2 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 sm:px-4 py-2 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                 />
               </div>
 
               <div>
-                <label htmlFor="playlistUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="playlistUrl" className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   YouTube Playlist URL
                 </label>
                 <input
@@ -182,7 +215,7 @@ function CourseCreation() {
                   onChange={(e) => setPlaylistUrl(e.target.value)}
                   placeholder="Enter YouTube Playlist URL"
                   disabled={isLoading}
-                  className="w-full px-4 py-2 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 sm:px-4 py-2 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                 />
               </div>
 
@@ -201,7 +234,7 @@ function CourseCreation() {
               </div>
 
               <button 
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 onClick={handleCreateCourse} 
                 disabled={!user || !playlistUrl || isLoading}
               >
@@ -210,7 +243,7 @@ function CourseCreation() {
             </div>
           </form>
         ) : (
-          <div className="p-8 text-center text-gray-600">
+          <div className="p-4 sm:p-8 text-center text-gray-600 text-sm sm:text-base">
             Please log in to create a course.
           </div>
         )}

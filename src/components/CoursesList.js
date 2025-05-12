@@ -4,7 +4,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { UserContext } from '../UserContext';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Users, BookOpen, Search, Clock, Loader2 } from 'lucide-react';
+import { Users, BookOpen, Search, Clock, Loader2, Plus } from 'lucide-react';
 
 function CoursesList() {
   const [courses, setCourses] = useState([]);
@@ -77,39 +77,50 @@ function CoursesList() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Filter Buttons */}
-        <div className="mb-8 flex justify-center space-x-4">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-md ${
-              filter === 'all' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            All Courses
-          </button>
-          <button
-            onClick={() => setFilter('public')}
-            className={`px-4 py-2 rounded-md ${
-              filter === 'public' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            Public Courses
-          </button>
-          {user && (
+        {/* Header with Create Course Button */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+          <div className="flex justify-center space-x-4 w-full sm:w-auto">
             <button
-              onClick={() => setFilter('personal')}
+              onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-md ${
-                filter === 'personal' 
+                filter === 'all' 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
-              My Courses
+              All Courses
             </button>
+            <button
+              onClick={() => setFilter('public')}
+              className={`px-4 py-2 rounded-md ${
+                filter === 'public' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Public Courses
+            </button>
+            {user && (
+              <button
+                onClick={() => setFilter('personal')}
+                className={`px-4 py-2 rounded-md ${
+                  filter === 'personal' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                My Courses
+              </button>
+            )}
+          </div>
+          {user && (
+            <Link
+              to="/create-course"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300 w-full sm:w-auto justify-center"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Create Course
+            </Link>
           )}
         </div>
 
@@ -128,7 +139,7 @@ function CoursesList() {
         </div>
 
         {/* Courses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {isLoading ? (
             <div className="col-span-full flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />

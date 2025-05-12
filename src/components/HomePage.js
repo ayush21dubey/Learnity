@@ -4,7 +4,6 @@ import { db } from '../firebase';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { BookOpen, Users, Search, MessageSquare, Loader2 } from 'lucide-react';
 import axios from 'axios';
-import Footer from './Footer';
 import { UserContext } from '../UserContext';
 
 function HomePage() {
@@ -175,8 +174,6 @@ function HomePage() {
           </div>
         </section>
       </main>
-
-      <Footer />
     </div>
   );
 }
